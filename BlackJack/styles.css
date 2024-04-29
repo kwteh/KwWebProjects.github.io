@@ -1,0 +1,65 @@
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+}
+
+#button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 0;
+  position: absolute;
+  padding-left: 600px;
+  top: 50%;
+}
+
+#score-display {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: calc(100% / 5);
+  height: 100%;
+  background-color: rgba(64, 64, 64, 0.8);
+  z-index: 1;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #ddd;
+  color: #000;
+}
+
+button:hover:not(:disabled) {
+  background-color: #ccc;
+}
+
+button:disabled {
+  cursor: default;
+  background-color: #aaa;
+}
+
+input[type="text"] {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 16px;
+}
+
+#result-message {
+  font-family: Calibri, sans-serif;
+  font-size: 20px;
+  font-weight: bold;
+}
