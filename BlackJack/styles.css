@@ -9,78 +9,78 @@ body {
 }
 
 #button-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 #score-display {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: calc(100% / 5);
-  height: 100%;
-  background-color: rgba(64, 64, 64, 0.8);
-  z-index: 1;
-  padding-left: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: calc(100% / 5);
+    height: 100%;
+    background-color: rgba(64, 64, 64, 0.8);
+    z-index: 1;
+    padding-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
 }
 
 @media (max-width: 600px) {
-  #score-display {
-    top: auto;
-    bottom: 0;
-    right: 0;
-    width: 100%;
-    height: 18vh;
-    padding-left: 0;
-    align-items: center;
-  }
+    #score-display {
+        top: auto;
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        height: 18vh;
+        padding-left: 0;
+        align-items: center;
+    }
 }
 
 button, input {
-  font-size: calc(0.5rem + 1vw);
-  padding: 1vw;
+    font-size: calc(0.5rem + 1vw);
+    padding: 1vw;
 }
 
 button {
-  margin: 0 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background-color: #fff;
-  color: #000;
+    margin: 0 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #fff;
+    color: #000;
 }
 
 input[type="text"] {
-  border: 1px solid #ccc;
-  border-radius: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
 @media (max-width: 600px) {
-  button, input {
-    font-size: calc(0.5rem + 2vw);
-  }
+    button, input {
+        font-size: calc(0.5rem + 2vw);
+    }
 }
 
 button:hover:not(:disabled) {
-  background-color: #ccc;
+    background-color: #ccc;
 }
 
 button:disabled {
-  cursor: default;
-  background-color: #aaa;
+    cursor: default;
+    background-color: #aaa;
 }
 
 #result-message {
-  font-family: Calibri, sans-serif;
-  font-size: 1.25rem;
-  font-weight: bold;
+    font-family: Calibri, sans-serif;
+    font-size: 1.25rem;
+    font-weight: bold;
 }
