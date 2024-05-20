@@ -189,25 +189,36 @@ class BlackjackGame {
 
   calculateScore(hand, isPlayer) {
     let score = 0;
+    let aceCount = 0;
+
+    // First pass: count all Aces as 1, and add other card values
     for (const card of hand) {
-      if (card.value === 1) {
-        if (score <= 10) {
-          score += 11;
+        if (card.value === 1) { // Ace
+            score += 1;
+            aceCount++;
+        } else if (card.value <= 10) {
+            score += card.value; // Numeric cards are scored by their face value
         } else {
-          score += 1;
+            score += 10; // Face cards (Jack, Queen, King) are each worth 10
         }
-      } else if (card.value <= 10) {
-        score += card.value;
-      } else {
-        score += 10;
-      }
     }
+
+    // Second pass: convert Aces from 1 to 11 as long as it doesn't bust the score
+    for (let i = 0; i < aceCount; i++) {
+        if (score + 10 <= 21) {
+            score += 10; // Only add 10 because we've already added 1 for the Ace
+        }
+    }
+
+    // Assign the calculated score to the appropriate player or dealer
     if (isPlayer) {
-      this.playerScore = score;
+        this.playerScore = score;
     } else {
-      this.dealerScore = score;
+        this.dealerScore = score;
     }
-    setTimeout(() => this.updateScoreDisplay(), 10)
+
+    // Update the score display after a slight delay
+    setTimeout(() => this.updateScoreDisplay(), 10);
   }
 
   dealStartingHand() {
