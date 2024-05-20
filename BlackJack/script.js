@@ -2,18 +2,26 @@ const app = new PIXI.Application({
   backgroundColor: 0x008000,
   width: window.innerWidth,
   height: window.innerHeight,
+  resizeTo: window
 });
 
 document.getElementById('game-container').appendChild(app.view);
+
+window.addEventListener('resize', () => {
+  app.renderer.resize(window.innerWidth, window.innerHeight);
+});
 
 class Card {
   constructor(suit, value) {
     this.container = new PIXI.Container();
     this.suit = suit;
     this.value = value;
+    this.createCardGraphics();
+  }
 
+  createCardGraphics() {
     const cardSprite = new PIXI.Graphics();
-	cardSprite.lineStyle(1, 0x000000);
+    cardSprite.lineStyle(1, 0x000000);
     cardSprite.beginFill(0xffffff);
     cardSprite.drawRect(0, 0, 100, 150);
     cardSprite.endFill();
@@ -60,253 +68,272 @@ class Card {
   }
 }
 
-const playerHand = [];
-const dealerHand = [];
-let playerScore = 0;
-let dealerScore = 0;
-var dealerCardHidden = true;
-const hiddenCard = new PIXI.Graphics();
-let playerMoney = 20000;
-
-function dealCard(hand, isPlayer) {
-  const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-  for (let i = suits.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [suits[i], suits[j]] = [suits[j], suits[i]];
+class BlackjackGame {
+  constructor() {
+    this.playerHand = [];
+    this.dealerHand = [];
+    this.playerScore = 0;
+    this.dealerScore = 0;
+    this.dealerCardHidden = true;
+    this.hiddenCard = new PIXI.Graphics();
+    this.playerMoney = 20000;
+    this.initUI();
   }
-  let suit, value;
 
-  do {
-    suit = suits[Math.floor(Math.random() * 4)];
-    value = Math.floor(Math.random() * 13) + 1;
-  } while (hand.some(card => card.suit === suit && card.value === value));
+  initUI() {
+    this.scoreDisplay = document.createElement('div');
+    this.scoreDisplay.id = 'score-display';
 
-  const card = new Card(suit, value);
-  hand.push(card);
-  
-  if (!isPlayer && hand.length === 2) {
-    hiddenCard.beginFill(0x000000);
-    hiddenCard.drawRect(0, 0, card.container.width, card.container.height);
-    hiddenCard.endFill();
-    dealerHand[0].container.addChild(hiddenCard);
+    this.playerScoreInput = document.createElement('input');
+    this.playerScoreInput.type = 'text';
+    this.playerScoreInput.readOnly = true;
+    this.playerScoreInput.placeholder = 'Player Score';
+
+    this.dealerScoreInput = document.createElement('input');
+    this.dealerScoreInput.type = 'text';
+    this.dealerScoreInput.readOnly = true;
+    this.dealerScoreInput.placeholder = 'Dealer Score';
+
+    this.resultMessage = document.createElement('p');
+    this.resultMessage.id = 'result-message';
+
+    this.scoreDisplay.appendChild(this.dealerScoreInput);
+    this.scoreDisplay.appendChild(this.resultMessage);
+    this.scoreDisplay.appendChild(this.playerScoreInput);
+
+    document.body.appendChild(this.scoreDisplay);
+
+    this.buttonContainer = document.createElement('div');
+    this.buttonContainer.id = 'button-container';
+
+    this.playerMoneyInput = document.createElement('input');
+    this.playerMoneyInput.type = 'text';
+    this.playerMoneyInput.readOnly = true;
+    this.playerMoneyInput.placeholder = 'Money';
+
+    this.dealButton = document.createElement('button');
+    this.dealButton.textContent = 'Deal';
+    this.dealButton.addEventListener('click', () => {
+      this.resetGame();
+      this.dealStartingHand();
+    });
+
+    this.hitButton = document.createElement('button');
+    this.hitButton.textContent = 'Hit';
+    this.hitButton.addEventListener('click', () => {
+      this.hit();
+    });
+
+    this.standButton = document.createElement('button');
+    this.standButton.textContent = 'Stand';
+    this.standButton.addEventListener('click', () => {
+      this.stand();
+    });
+
+    this.buttonContainer.appendChild(this.playerMoneyInput);
+    this.buttonContainer.appendChild(this.dealButton);
+    this.buttonContainer.appendChild(this.hitButton);
+    this.buttonContainer.appendChild(this.standButton);
+
+    document.body.appendChild(this.buttonContainer);
+
+    this.getPlayerMoney();
+    console.log(localStorage.getItem('playerMoney'));
+    this.dealStartingHand();
   }
-  
-  app.stage.addChild(card.container);
 
-  const offset = isPlayer ? app.screen.height - 250 : 50;
-  card.container.position.set(app.screen.width / 2 - (hand.length - 1) * 60, offset);
-
-  calculateScore(hand, isPlayer);
-}
-
-function calculateScore(hand, isPlayer) {
-  let score = 0;
-  for (const card of hand) {
-	if (card.value === 1) {
-	  if (score <= 10) {
-		score += 11;
-	  } else {
-		score += 1;
-	  }
-	} else if (card.value <= 10) {
-	  score += card.value;
-	} else {
-	  score += 10;
-	}
+  resetGame() {
+    this.playerHand.length = 0;
+    this.dealerHand.length = 0;
+    this.playerScore = 0;
+    this.dealerScore = 0;
+    app.stage.removeChildren();
   }
-  if (isPlayer) {
-    playerScore = score;
-  } else {
-    dealerScore = score;
+
+  dealCard(hand, isPlayer) {
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const values = Array.from({ length: 13 }, (_, i) => i + 1);
+    const deck = suits.flatMap(suit => values.map(value => ({ suit, value })));
+
+    // Fisher-Yates shuffle algorithm
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+
+    let card;
+    do {
+      card = deck.pop();
+    } while (hand.some(c => c.suit === card.suit && c.value === card.value));
+
+    const newCard = new Card(card.suit, card.value);
+    hand.push(newCard);
+
+    if (!isPlayer && hand.length === 2) {
+      this.hiddenCard.beginFill(0x000000);
+      this.hiddenCard.drawRect(0, 0, newCard.container.width, newCard.container.height);
+      this.hiddenCard.endFill();
+      this.dealerHand[0].container.addChild(this.hiddenCard);
+    }
+
+    app.stage.addChild(newCard.container);
+
+    const playerOffset = app.screen.height / 2 + 100;
+    const dealerOffset = app.screen.height / 2 - 250;
+    const offset = isPlayer ? playerOffset : dealerOffset;
+    const cardPositionX = (app.screen.width / 2) - (hand.length - 1) * 60;
+    newCard.container.position.set(cardPositionX, offset);
+
+    this.calculateScore(hand, isPlayer);
   }
-  setTimeout(() => updateScoreDisplay(), 10)
-}
 
-function dealStartingHand() {
-  if (playerMoney >= 500) {
-	addPlayerMoney(-500);
-	dealCard(playerHand, true);
-	dealCard(playerHand, true);
-	dealCard(dealerHand, false);
-	dealCard(dealerHand, false);
-	dealerCardHidden = true;
-	hitButton.disabled = false;
-	standButton.disabled = false;
-	dealButton.disabled = true;
-	checkBlackjack();
-  } else {
-	alert("Not enough money! Loser~");
+  calculateScore(hand, isPlayer) {
+    let score = 0;
+    for (const card of hand) {
+      if (card.value === 1) {
+        if (score <= 10) {
+          score += 11;
+        } else {
+          score += 1;
+        }
+      } else if (card.value <= 10) {
+        score += card.value;
+      } else {
+        score += 10;
+      }
+    }
+    if (isPlayer) {
+      this.playerScore = score;
+    } else {
+      this.dealerScore = score;
+    }
+    setTimeout(() => this.updateScoreDisplay(), 10)
   }
-}
 
-function hit() {
-  dealCard(playerHand, true);
-  checkBust(playerHand);
-}
-
-function stand() {
-  dealerHand[0].container.removeChild(hiddenCard);
-  dealerCardHidden = false;
-  while (dealerScore < 17) {
-    dealCard(dealerHand, false);
-    calculateScore(dealerHand, false);
+  dealStartingHand() {
+    if (this.playerMoney >= 500) {
+      this.addPlayerMoney(-500);
+      this.dealCard(this.playerHand, true);
+      this.dealCard(this.playerHand, true);
+      this.dealCard(this.dealerHand, false);
+      this.dealCard(this.dealerHand, false);
+      this.dealerCardHidden = true;
+      this.hitButton.disabled = false;
+      this.standButton.disabled = false;
+      this.dealButton.disabled = true;
+      this.checkBlackjack();
+    } else {
+      alert("Not enough money! Loser~");
+    }
   }
-  checkWinner();
-}
 
-function checkBlackjack() {
-  if (playerHand.length === 2 && playerScore === 21) {
-    displayMessage("Blackjack! You Win $1500!", true);
-	addPlayerMoney(1500);
-    hitButton.disabled = true;
-    standButton.disabled = true;
-	dealButton.disabled = false;
+  hit() {
+    this.dealCard(this.playerHand, true);
+    this.checkBust(this.playerHand);
   }
-  return;
-}
 
-function checkBust(hand) {
-  calculateScore(hand, hand === playerHand);
-  if (playerScore > 21) {
-	dealerHand[0].container.removeChild(hiddenCard);
-	dealerCardHidden = false;
-    displayMessage("You Bust! Dealer Wins!", false);
-    hitButton.disabled = true;
-    standButton.disabled = true;
-	dealButton.disabled = false;
+  stand() {
+    this.dealerHand[0].container.removeChild(this.hiddenCard);
+    this.dealerCardHidden = false;
+    while (this.dealerScore < 17) {
+      this.dealCard(this.dealerHand, false);
+      this.calculateScore(this.dealerHand, false);
+    }
+    this.checkWinner();
   }
-}
 
-function checkWinner() {
-  if (playerScore > 21) {
+  checkBlackjack() {
+    if (this.playerHand.length === 2 && this.playerScore === 21) {
+      this.displayMessage("Blackjack! You Win $1500!", true);
+      this.addPlayerMoney(1500);
+      this.hitButton.disabled = true;
+      this.standButton.disabled = true;
+      this.dealButton.disabled = false;
+    }
     return;
   }
-  dealerHand[0].container.removeChild(hiddenCard);
-  dealerCardHidden = false;
-  if (dealerScore > 21) {
-    displayMessage("Dealer Bust! You Win $1000!", true);
-	addPlayerMoney(1000);
-  } else if (playerScore > dealerScore) {
-    displayMessage("You Win $1000!", true);
-	addPlayerMoney(1000);
-  } else if (playerScore === dealerScore) {
-    displayMessage("Push! Tie Game", true);
-	addPlayerMoney(500);
-  } else {
-    displayMessage("Dealer Wins!", false);
+
+  checkBust(hand) {
+    this.calculateScore(hand, hand === this.playerHand);
+    if (this.playerScore > 21) {
+      this.dealerHand[0].container.removeChild(this.hiddenCard);
+      this.dealerCardHidden = false;
+      this.displayMessage("You Bust! Dealer Wins!", false);
+      this.hitButton.disabled = true;
+      this.standButton.disabled = true;
+      this.dealButton.disabled = false;
+    }
   }
-  updateScoreDisplay();
-  hitButton.disabled = true;
-  standButton.disabled = true;
-  dealButton.disabled = false;
-}
 
-function displayMessage(msg, color) {
-  setTimeout(() => resultMessage.textContent = msg, 15);
-  resultMessage.style.color = color ? 'green' : 'red';
-}
-
-function updateScoreDisplay() {
-  playerScoreInput.value = `Player Score: ${playerScore}`;
-  if (dealerHand.length > 1) {
-	if (dealerCardHidden) {
-	  let hiddenCardValue;
-	  if (dealerHand[0].value > 10) {
-		hiddenCardValue = dealerScore - 10;
-		dealerScoreInput.value = `Dealer Score: ${hiddenCardValue}`;
-	  } else if (dealerHand[0].value === 1) {
-		if (dealerHand[1].value === 1) {
-		  hiddenCardValue = 11;
-		  dealerScoreInput.value = `Dealer Score: ${hiddenCardValue}`;
-		} else {
-		  hiddenCardValue = dealerScore - 11;
-		  dealerScoreInput.value = `Dealer Score: ${hiddenCardValue}`;
-		}
-	  } else {
-		const hiddenCardValue = dealerScore - dealerHand[0].value;
-		dealerScoreInput.value = `Dealer Score: ${hiddenCardValue}`;
-	  }
-	} else {
-	  dealerScoreInput.value = `Dealer Score: ${dealerScore}`
-	}
-  } else {
-    dealerScoreInput.value = `Dealer Score: ?`;
+  checkWinner() {
+    if (this.playerScore > 21) {
+      return;
+    }
+    this.dealerHand[0].container.removeChild(this.hiddenCard);
+    this.dealerCardHidden = false;
+    if (this.dealerScore > 21) {
+      this.displayMessage("Dealer Bust! You Win $1000!", true);
+      this.addPlayerMoney(1000);
+    } else if (this.playerScore > this.dealerScore) {
+      this.displayMessage("You Win $1000!", true);
+      this.addPlayerMoney(1000);
+    } else if (this.playerScore === this.dealerScore) {
+      this.displayMessage("Push! Tie Game", true);
+      this.addPlayerMoney(500);
+    } else {
+      this.displayMessage("Dealer Wins!", false);
+    }
+    this.updateScoreDisplay();
+    this.hitButton.disabled = true;
+    this.standButton.disabled = true;
+    this.dealButton.disabled = false;
   }
-  resultMessage.textContent = '';
+
+  displayMessage(msg, color) {
+    setTimeout(() => this.resultMessage.textContent = msg, 15);
+    this.resultMessage.style.color = color ? 'green' : 'red';
+  }
+
+  updateScoreDisplay() {
+    this.playerScoreInput.value = `Player Score: ${this.playerScore}`;
+    if (this.dealerHand.length > 1) {
+      if (this.dealerCardHidden) {
+        let hiddenCardValue;
+        if (this.dealerHand[0].value > 10) {
+          hiddenCardValue = this.dealerScore - 10;
+          this.dealerScoreInput.value = `Dealer Score: ${hiddenCardValue}`;
+        } else if (this.dealerHand[0].value === 1) {
+          if (this.dealerHand[1].value === 1) {
+            hiddenCardValue = 11;
+            this.dealerScoreInput.value = `Dealer Score: ${hiddenCardValue}`;
+          } else {
+            hiddenCardValue = this.dealerScore - 11;
+            this.dealerScoreInput.value = `Dealer Score: ${hiddenCardValue}`;
+          }
+        } else {
+          const hiddenCardValue = this.dealerScore - this.dealerHand[0].value;
+          this.dealerScoreInput.value = `Dealer Score: ${hiddenCardValue}`;
+        }
+      } else {
+        this.dealerScoreInput.value = `Dealer Score: ${this.dealerScore}`
+      }
+    } else {
+      this.dealerScoreInput.value = `Dealer Score: ?`;
+    }
+    this.resultMessage.textContent = '';
+  }
+
+  getPlayerMoney() {
+    const storedMoney = localStorage.getItem('playerMoney');
+    this.playerMoney = storedMoney ? parseInt(storedMoney) : 20000;
+    this.playerMoneyInput.value = `Money: $${this.playerMoney}`;
+  }
+
+  addPlayerMoney(amount) {
+    this.playerMoney += amount;
+    this.playerMoneyInput.value = `Money: $${this.playerMoney}`;
+    localStorage.setItem('playerMoney', this.playerMoney);
+  }
 }
 
-function getPlayerMoney() {
-  const storedMoney = localStorage.getItem('playerMoney');
-  playerMoney = storedMoney ? parseInt(storedMoney) : 20000;
-  playerMoneyInput.value = `Money: $${playerMoney}`;
-}
-
-function addPlayerMoney(amount) {
-  playerMoney += amount;
-  playerMoneyInput.value = `Money: $${playerMoney}`;
-  localStorage.setItem('playerMoney', playerMoney);
-}
-
-const scoreDisplay = document.createElement('div');
-scoreDisplay.id = 'score-display';
-
-const playerScoreInput = document.createElement('input');
-playerScoreInput.type = 'text';
-playerScoreInput.readOnly = true;
-playerScoreInput.placeholder = 'Player Score';
-
-const dealerScoreInput = document.createElement('input');
-dealerScoreInput.type = 'text';
-dealerScoreInput.readOnly = true;
-dealerScoreInput.placeholder = 'Dealer Score';
-
-const resultMessage = document.createElement('p');
-resultMessage.id = 'result-message';
-
-scoreDisplay.appendChild(dealerScoreInput);
-scoreDisplay.appendChild(resultMessage);
-scoreDisplay.appendChild(playerScoreInput);
-
-document.body.appendChild(scoreDisplay);
-
-const buttonContainer = document.createElement('div');
-buttonContainer.id = 'button-container';
-
-const playerMoneyInput = document.createElement('input');
-playerMoneyInput.type = 'text';
-playerMoneyInput.readOnly = true;
-playerMoneyInput.placeholder = 'Money';
-
-const dealButton = document.createElement('button');
-dealButton.textContent = 'Deal';
-dealButton.addEventListener('click', () => {
-  playerHand.length = 0;
-  dealerHand.length = 0;
-  playerScore = 0;
-  dealerScore = 0;
-  app.stage.removeChildren();
-  dealStartingHand();
-});
-
-const hitButton = document.createElement('button');
-hitButton.textContent = 'Hit';
-hitButton.addEventListener('click', () => {
-  hit();
-});
-
-const standButton = document.createElement('button');
-standButton.textContent = 'Stand';
-standButton.addEventListener('click', () => {
-  stand();
-});
-
-buttonContainer.appendChild(playerMoneyInput);
-buttonContainer.appendChild(dealButton);
-buttonContainer.appendChild(hitButton);
-buttonContainer.appendChild(standButton);
-
-document.body.appendChild(buttonContainer);
-
-getPlayerMoney();
-console.log(localStorage.getItem('playerMoney'));
-dealStartingHand();
+const blackjackGame = new BlackjackGame();
