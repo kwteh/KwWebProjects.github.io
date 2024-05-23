@@ -1,0 +1,62 @@
+body, html {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: calc(100% / 4);
+    height: 100%;
+    background-color: rgba(64, 64, 64, 0.8);
+    z-index: 1;
+    padding: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+#controls h1 {
+    font-family: Calibri, sans-serif;
+    font-weight: bold;
+    font-size: 32px;
+    color: white;
+    margin-left: 10px;
+    margin-bottom: 50px;
+}
+
+#controls label {
+    font-family: Calibri, sans-serif;
+    font-weight: bold;
+    font-size: 20px;
+    color: white;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#controls input {
+    box-sizing: border-box;
+    border: none;
+    border-radius: 20px;
+    padding: 10px;
+    opacity: 0.8;
+    margin-bottom: 15px;
+}
+
+#controls select {
+    box-sizing: border-box;
+    border: none;
+    border-radius: 20px;
+    padding: 5px;
+    opacity: 0.8;
+    margin-bottom: 15px;
+}

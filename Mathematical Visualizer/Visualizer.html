@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Model Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="controls">
+        <h1>Math Model Visualizer</h1>
+        <table>
+            <tr>
+                <td>
+                    <label for="formula">Formula:</label>
+                </td>
+                <td>
+                    <select id="formula">
+                        <option value="burningShip">Burning Ship: z=(|Re(z)|+|Im(z)|i)^2+c</option>
+                        <option value="julia">Julia Set: z=z*z+c</option>
+                        <option value="lyapunov">Lyapunov: x_{n+1}=r_n x_n(1-x_n),λcalc</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="centerX">Center X: </label>
+                </td>
+                <td>
+                    <input type="text" id="centerX" value="0.45" readonly>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="centerY">Center Y:</label>
+                </td>
+                <td>
+                    <input type="text" id="centerY" value="0.5" readonly>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="scale">Scale:</label>
+                </td>
+                <td>
+                    <input type="text" id="scale" value="1.0" readonly>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <canvas id="glCanvas"></canvas>
+    <script src="shaders.js"></script>
+    <script src="burningShip.js"></script>
+    <script src="lyapunov.js"></script>
+    <script src="juliaSet.js"></script>
+    <script src="ui.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
+</html>
